@@ -69,17 +69,21 @@ void fetchData()
   };
 
   if (proficiency) {
+    printf("Fetching repositories...\n");
     std::shared_ptr<DBClientCursor> cur = conn.query("codersearch.repositories");
-    while (cur->more()) {
+    for (int numItems = 0; cur->more(); numItems++) {
       auto p = cur->next();
       string repo = p.getStringField("full_name"), lang = p.getStringField("language");
       if (lang != "")
         repo2lang[repo] = lang;
+      if (numItems % 1000 == 0)
+        printf("%d\n", numItems);
     }
   }
 
   std::shared_ptr<DBClientCursor> cur = conn.query("codersearch.contributes");
-  while (cur->more()) {
+  printf("Fetching contributes...\n");
+  for (int numItems = 0; cur->more(); numItems++) {
     auto p = cur->next();
     string user = p.getStringField("login"), repo = p.getStringField("repository"), lang;
     if (proficiency) {
@@ -92,6 +96,8 @@ void fetchData()
     contrib.push_back(make_pair(make_pair(rid, uid), commits));
     userCommits[uid] += commits;
     repoCommits[rid] += commits;
+    if (numItems % 1000 == 0)
+      printf("%d\n", numItems);
   }
 }
 
