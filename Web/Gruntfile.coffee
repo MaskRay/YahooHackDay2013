@@ -6,7 +6,7 @@ module.exports = (grunt) ->
       debug:
         files: [
           expand: true
-          cwd: 'js'
+          cwd: 'assets/js'
           src: ['**/*.coffee', '!**/_*.coffee']
           dest: 'public/js'
           ext: '.js'
@@ -16,7 +16,7 @@ module.exports = (grunt) ->
       debug:
         files: [
           expand: true
-          cwd: 'css'
+          cwd: 'assets/css'
           src: ['**/*.styl', '!**/_*.styl']
           dest: 'public/css'
           ext: '.css'
@@ -33,6 +33,7 @@ module.exports = (grunt) ->
 
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-stylus'
+  grunt.loadNpmTasks 'grunt-contrib-watch'
 
   grunt.registerTask 'debug', ['coffee:debug', 'stylus:debug']
-  grunt.registerTask 'default', ['debug']
+  grunt.registerTask 'default', ['debug', 'watch']
