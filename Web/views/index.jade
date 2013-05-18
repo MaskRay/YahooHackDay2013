@@ -4,8 +4,56 @@ block title
   | Coder Search
 
 block content
-  .container
-    h1 Coder Search
-    input.location(name='location')
-    input.language(name='language')
-    input.field(name='field')
+  header
+    .container
+      a.logo(href='/') CoderSearch
+      nav
+        a(href='#') Gallery
+        a(href='#') About
+  section.masthead
+    h1
+      a(href='/')
+        span Search for
+        | Coders
+        br
+        span Find
+        | Friends
+  section
+    form(method='post', name='frm-search')
+      .circle
+        hr
+        hr
+        .input-container.location
+          span Location
+          div
+            select(name='location')
+              option 北京
+              option 上海
+        .input-container.hirable
+          span Hirable
+          div
+            select(name='hirable')
+              option Yes
+              option No
+        .input-container.field
+          span Field
+          div
+            input(name='field')
+        .input-container.language
+          span Lang
+          div
+            select(name='language')
+              option Haskell
+              option OCaml
+              option Scala
+              option C++
+              option JavaScript
+      button Submit
+  section#result
+    if typeof results != 'undefined'
+      for i in results
+        .user
+          = i.login
+          |  (
+          = i.name
+          | )
