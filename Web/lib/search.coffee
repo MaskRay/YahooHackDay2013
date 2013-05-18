@@ -1,7 +1,7 @@
 'use continuation'
 
 mongoose = require 'mongoose'
-user = require '../models/user'
+User = require '../models/user'
 
 cities =
   北京: 'BEIJING'
@@ -424,7 +424,7 @@ cities =
 module.exports = (options, cont) ->
   location = options.location
   hireable = options.hireable ? false
-  language = options.language
+  language = options.language.toLowerCase().replace(/-/g, '').replace('#', 'sharp')
   skip = options.skip ? 0
   limit = Number(options.limit) ? 0
   if isNaN(skip)
@@ -439,8 +439,9 @@ module.exports = (options, cont) ->
   else if ! language?
     cont 'language required'
   else
-    location = location[0].toUpperCase() + location[1..-1]
+    location = location[0].toUpperCase() + location[1..-1] + ', China'
     languages = {}
     languages[language] = 1
-    User.find {location, hireable}, null, {skip, limit, sort: {languages}}, obtain(users)
+    console.log location
+    User.find {location}, null, {skip, limit, sort: {languages}}, obtain(users)
     cont null, users
