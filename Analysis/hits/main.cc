@@ -17,10 +17,17 @@ using namespace mongo;
 
 typedef long double ld;
 
+bool proficiency = false;
+
+map<string, string> repo2lang;
 map<string, int> user2id, repo2id;
+map<pair<string, string>, int> userlang2id;
 vector<string> id2user, id2repo;
+vector<pair<string, string>> id2userlang;
 vector<tuple<int, int, int> > contrib;
 vector<int> userCommits, repoCommits;
+
+vector<ld> userV, repoV;
 
 string host = "localhost", port = "27017";
 
@@ -41,6 +48,17 @@ void fetchData()
     return t;
   };
 
+  auto getUserLangId = [&](string name, string lang) -> int {
+    pair<string, string> nl(name, lang);
+    if (userlang2id.count(nl))
+      return userlang2id[nl];
+    int t = int(userlang2id.size());
+    userlang2id[nl] = t;
+    id2userlang.push_back(nl);
+    userCommits.resize(t + 1);
+    return t;
+  };
+
   auto getRepoId = [&](string name) -> int {
     if (repo2id.count(name))
       return repo2id[name];
@@ -51,58 +69,61 @@ void fetchData()
     return t;
   };
 
+  if (proficiency) {
+    std::shared_ptr<DBClientCursor> cur = conn.query("codersearch.repositories");
+    while (cur->more()) {
+      auto p = cur->next();
+      string repo = p.getStringField("full_name"), lang = p.getStringField("language");
+      if (lang != "")
+        repo2lang[repo] = lang;
+    }
+  }
+
   std::shared_ptr<DBClientCursor> cur = conn.query("codersearch.contributes");
   while (cur->more()) {
     auto p = cur->next();
-    string user = p.getStringField("login"), repo = p.getStringField("repository");
+    string user = p.getStringField("login"), repo = p.getStringField("repository"), lang;
+    if (proficiency) {
+      if (! repo2lang.count(repo)) continue;
+      lang = repo2lang[repo];
+    }
     int commits = p.getIntField("commits");
-    int uid = getUserId(user), rid = getRepoId(repo);
+    int uid = ! proficiency ? getUserId(user) : getUserLangId(user, lang);
+    int rid = getRepoId(repo);
     contrib.push_back(make_tuple(rid, uid, commits));
     userCommits[uid] += commits;
     repoCommits[rid] += commits;
   }
 }
 
-void hits(int niter)
+void hits(int niter, int nuser, int nrepo)
 {
-  ld *userV = new ld[user2id.size()], *repoV = new ld[repo2id.size()];
-  fill_n(userV, user2id.size(), ld(1) / user2id.size());
-  fill_n(repoV, repo2id.size(), ld(1) / repo2id.size());
+  userV.assign(nuser, ld(1) / nuser);
+  repoV.assign(nrepo, ld(1) / nrepo);
 
   REP(iter, niter) {
     printf("iteration %d\n", iter);
 
-    fill_n(userV, user2id.size(), ld(0));
+    fill(userV.begin(), userV.end(), ld(0));
     for (auto &e: contrib) {
       int x = get<0>(e), y = get<1>(e), z = get<2>(e);
       if (repoCommits[x])
         userV[y] += repoV[x] * ld(z) / repoCommits[x];
     }
-    ld invTot = ld(1) / accumulate(userV, userV + user2id.size(), ld(0));
-    REP(i, user2id.size())
+    ld invTot = ld(1) / accumulate(userV.begin(), userV.end(), ld(0));
+    REP(i, nuser)
       userV[i] *= invTot;
 
-    fill_n(repoV, repo2id.size(), ld(0));
+    fill(repoV.begin(), repoV.end(), ld(0));
     for (auto &e: contrib) {
       int x = get<0>(e), y = get<1>(e), z = get<2>(e);
       if (userCommits[y])
         repoV[x] += userV[y] * ld(z) / userCommits[y];
     }
-    invTot = ld(1) / accumulate(repoV, repoV + repo2id.size(), ld(0));
-    REP(i, repo2id.size())
+    invTot = ld(1) / accumulate(repoV.begin(), repoV.end(), ld(0));
+    REP(i, nrepo)
       repoV[i] *= invTot;
   }
-
-  puts("---user---");
-  REP(i, user2id.size())
-    printf("%d %.10Lf %s\n", i, userV[i], id2user[i].c_str());
-
-  puts("---repo---");
-  REP(i, repo2id.size())
-    printf("%d %.10Lf %s\n", i, repoV[i], id2repo[i].c_str());
-
-  delete[] userV;
-  delete[] repoV;
 }
 
 char *progname;
@@ -113,8 +134,7 @@ void usage()
   printf("  --host -h STRING\n");
   printf("  --port -p NUM\n");
   printf("  -i, --niter=NUM     number of iterations, default is 30\n");
-  printf("  -u, --ntopuser=NUM  show top NUM coders, default is 10\n");
-  printf("  -r, --ntoprepo=NUM  show top NUM coders, default is 10\n");
+  printf("  -l, --language-proficiency\n");
 }
 
 int main(int argc, char *argv[])
@@ -124,13 +144,14 @@ int main(int argc, char *argv[])
     {"host",  required_argument,  NULL, 'h'},
     {"port",  required_argument,  NULL, 'p'},
     {"niter", required_argument,  NULL, 'i'},
+    {"proficiency", required_argument,  NULL, 'p'},
     {0,     0,          0,    0}
   };
   ld factor_d = 0.85;
   int niter = 30;
   int opt;
 
-  while ((opt = getopt_long(argc, argv, "h:p:u:r:", long_options, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, "h:p:i:l", long_options, NULL)) != -1) {
     switch (opt) {
       case 'h':
         host = optarg;
@@ -141,6 +162,9 @@ int main(int argc, char *argv[])
       case 'i':
         niter = atoi(optarg);
         break;
+      case 'l':
+        proficiency = true;
+        break;
       default:
         usage();
         return 1;
@@ -148,6 +172,24 @@ int main(int argc, char *argv[])
   }
 
   fetchData();
-  hits(niter);
+  if (! proficiency)
+    hits(niter, user2id.size(), repo2id.size());
+  else
+    hits(niter, userlang2id.size(), repo2id.size());
+
+  if (! proficiency) {
+    puts("---user---");
+    REP(i, user2id.size())
+      printf("%d %s %.10Lf\n", i, id2user[i].c_str(), userV[i]);
+  } else {
+    puts("---user lang---");
+    REP(i, userlang2id.size())
+      printf("%d %s %s %.10Lf\n", i, id2userlang[i].first.c_str(), id2userlang[i].second.c_str(), userV[i]);
+  }
+
+  puts("---repo---");
+  REP(i, repo2id.size())
+    printf("%d %.10Lf %s\n", i, repoV[i], id2repo[i].c_str());
+
   return 0;
 }
