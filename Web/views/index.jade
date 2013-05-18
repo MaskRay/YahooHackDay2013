@@ -456,7 +456,8 @@ block content
         .input-container.language
           span Lang
           div
-            select(name='language', value='Haskell')
+            select(name='language', value='*Overall')
+              option *Overall
               option ActionScript
               option C
               option C#
@@ -480,16 +481,18 @@ block content
               option Scheme
       button Submit
   section#result
-    if typeof users != 'undefined'
-      for i in users
-        .user
-          .login = i.login
-          |  (
-          .name = i.name
-          | )
-          br
-          span Hireable
-          = i.hireable
-          for lang, proficiency in i.languages
-            span lang
-            span proficiency
+    .container
+      if typeof users != 'undefined'
+        for i in users
+          .user-item
+            a(href='#')
+              img(src='https://secure.gravatar.com/avatar/' + i.gravatar_id)
+              .user-item-desc
+                .row
+                  span.login= i.login
+                  |  (
+                  span.name= i.name
+                  | )
+                .row
+                  = 'Rank '
+                  span.rank= i.hits_rank * 1e8

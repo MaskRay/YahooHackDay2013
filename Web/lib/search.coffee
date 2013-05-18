@@ -1,5 +1,6 @@
 'use continuation'
 
+_ = require 'underscore'
 mongoose = require 'mongoose'
 User = require '../models/user'
 
@@ -432,7 +433,7 @@ module.exports = (options, cont) ->
   if isNaN(limit) or limit > 10
     limit = 10
   if location of cities
-    location = cities[location]
+    location = cities[location].toLowerCase()
 
   if ! location?
     cont 'location required'
@@ -440,8 +441,12 @@ module.exports = (options, cont) ->
     cont 'language required'
   else
     location = location[0].toUpperCase() + location[1..-1] + ', China'
-    languages = {}
-    languages[language] = 1
+    args = {skip, limit}
+    if language[0] == '*' # hits
+      args.sort = {hits_rank: -1}
+    else
+      args.sort = {}
+      args.sort['languages.' + language] = -1
     console.log location
-    User.find {location}, null, {skip, limit, sort: {languages}}, obtain(users)
+    User.find {location}, null, _.extend(args, {limit}), obtain(users)
     cont null, users

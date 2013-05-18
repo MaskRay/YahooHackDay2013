@@ -49,7 +49,9 @@ userKeys =
     ruby: Number
     scala: Number
     scheme: Number
-  hits_rank: Number
+  hits_rank:
+    type: Number
+    index: true
 
 userSchema = new db.Schema(userKeys)
 module.exports = User = db.model 'User', userSchema
