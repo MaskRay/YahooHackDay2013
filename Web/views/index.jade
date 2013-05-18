@@ -446,11 +446,11 @@ block content
         .input-container.hirable
           span Hirable
           div
-            select(name='hirable', value='Yes')
-              option Yes
+            select(name='hirable', value='No')
               option No
+              option Yes
         .input-container.field
-          span Field
+          label(for='field') Field
           div
             input(name='field')
         .input-container.language
@@ -481,18 +481,15 @@ block content
               option Scheme
       button Submit
   section#result
-    .container
+    .wrapper
       if typeof users != 'undefined'
         for i in users
           .user-item
             a(href='#')
               img(src='https://secure.gravatar.com/avatar/' + i.gravatar_id)
-              .user-item-desc
-                .row
-                  span.login= i.login
-                  |  (
-                  span.name= i.name
-                  | )
-                .row
-                  = 'Rank '
-                  span.rank= i.hits_rank * 1e8
+            .user-item-desc
+              .name
+                = i.login + ' (' + i.name + ')'
+              .row
+                = 'Rank '
+                span.rank= (i.hits_rank * 1e8).toFixed(2)

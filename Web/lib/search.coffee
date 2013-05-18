@@ -441,12 +441,15 @@ module.exports = (options, cont) ->
     cont 'language required'
   else
     location = location[0].toUpperCase() + location[1..-1] + ', China'
+    cond = {location}
     args = {skip, limit}
     if language[0] == '*' # hits
       args.sort = {hits_rank: -1}
     else
       args.sort = {}
       args.sort['languages.' + language] = -1
-    console.log location
+      cond['languages.' + language] = $gt: 0
+    console.log cond
     User.find {location}, null, _.extend(args, {limit}), obtain(users)
+    #User.find cond, null, _.extend(args, {limit}), obtain(users)
     cont null, users
