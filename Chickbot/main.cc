@@ -9,7 +9,7 @@
 #include <utility>
 using namespace std;
 
-const int N = 250000;
+const int N = 170000;
 const int MAX_QUESTION_LEN = 1000;
 int tot = 1, tail = 0;
 struct Node
@@ -45,17 +45,17 @@ void add(int c, int ans)
 pair<int, const char *> query(const char *q)
 {
   int p = 0, x = 0, opt = 0, ans = 0;
-  int32_t c = 0;
   for (; *q; q++) {
-    if (a[p].c[*q] != -1) {
-      p = a[p].c[*q];
+    int c = *(const unsigned char *)q;
+    if (a[p].c[c] != -1) {
+      p = a[p].c[c];
       x++;
     } else {
-      while (p != -1 && a[p].c[*q] == -1)
+      while (p != -1 && a[p].c[c] == -1)
         p = a[p].f;
       if (p != -1) {
         x = a[p].l + 1;
-        p = a[p].c[*q];
+        p = a[p].c[c];
       } else {
         x = 0;
         p = 0;
@@ -73,13 +73,11 @@ int main()
 {
   const int M = 10000;
   static char question[M + 1];
-  int n;
-  scanf("%d", &n);
   int nans = 0;
   memset(&a[0], -1, sizeof(Node));
   while (scanf("%s%s", question, answer + nans) == 2) {
     for (char *q = question; ; q++) {
-      add(*q, nans);
+      add(*(unsigned char *)q, nans);
       if (! *q) break;
     }
     nans += int(strlen(answer + nans)) + 1;
@@ -107,14 +105,18 @@ int main()
     int client = accept(sockfd, (struct sockaddr *)&cliAddr, &cliLen);
     if (client < 0)
       return perror(""), 1;
-    int n = read(client, buf, MAX_QUESTION_LEN);
-    if (n <= 0) {
+    if (fork() == 0) {
+      int n = read(client, buf, MAX_QUESTION_LEN);
+      if (n <= 0) {
+        close(client);
+        continue;
+      }
+      buf[n] = '\0';
+      auto res = query((const char *)buf);
+      write(client, res.second, strlen(res.second));
       close(client);
-      continue;
+      return 0;
     }
-    buf[n] = '\0';
-    auto res = query(buf);
-    write(client, res.second, strlen(res.second));
     close(client);
   }
 }
