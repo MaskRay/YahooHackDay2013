@@ -6,7 +6,6 @@
 #include <mongo/client/dbclient.h>
 #include <stdio.h>
 #include <string>
-#include <tuple>
 #include <unistd.h>
 #include <vector>
 using namespace std;
@@ -24,7 +23,7 @@ map<string, int> user2id, repo2id;
 map<pair<string, string>, int> userlang2id;
 vector<string> id2user, id2repo;
 vector<pair<string, string>> id2userlang;
-vector<tuple<int, int, int> > contrib;
+vector<pair<pair<int, int>, int> > contrib;
 vector<int> userCommits, repoCommits;
 
 vector<ld> userV, repoV;
@@ -90,7 +89,7 @@ void fetchData()
     int commits = p.getIntField("commits");
     int uid = ! proficiency ? getUserId(user) : getUserLangId(user, lang);
     int rid = getRepoId(repo);
-    contrib.push_back(make_tuple(rid, uid, commits));
+    contrib.push_back(make_pair(make_pair(rid, uid), commits));
     userCommits[uid] += commits;
     repoCommits[rid] += commits;
   }
@@ -106,7 +105,7 @@ void hits(int niter, int nuser, int nrepo)
 
     fill(userV.begin(), userV.end(), ld(0));
     for (auto &e: contrib) {
-      int x = get<0>(e), y = get<1>(e), z = get<2>(e);
+      int x = e.first.first, y = e.first.second, z = e.second;
       if (repoCommits[x])
         userV[y] += repoV[x] * ld(z) / repoCommits[x];
     }
@@ -116,7 +115,7 @@ void hits(int niter, int nuser, int nrepo)
 
     fill(repoV.begin(), repoV.end(), ld(0));
     for (auto &e: contrib) {
-      int x = get<0>(e), y = get<1>(e), z = get<2>(e);
+      int x = e.first.first, y = e.first.second, z = e.second;
       if (userCommits[y])
         repoV[x] += userV[y] * ld(z) / userCommits[y];
     }
