@@ -1,11 +1,15 @@
 _ = require 'underscore'
+search = require '../lib/search'
 
 module.exports.index = (req, res) ->
-  search req.query, (err, users) ->
-    if err?
-      res.render 'home', {err}
-    else
-      res.render 'home', {users}
+  res.render 'index'
 
 module.exports.search = (req, res) ->
-  location = req.param('location')
+  console.log req.body
+  search req.body, (err, users) ->
+    if err?
+      console.log err
+      res.render 'index', {err}
+    else
+      console.log users
+      res.render 'index', {users}

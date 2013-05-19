@@ -1,7 +1,8 @@
 'use continuation'
 
+_ = require 'underscore'
 mongoose = require 'mongoose'
-user = require '../models/user'
+User = require '../models/user'
 
 cities =
   北京: 'BEIJING'
@@ -424,7 +425,7 @@ cities =
 module.exports = (options, cont) ->
   location = options.location
   hireable = options.hireable ? false
-  language = options.language
+  language = options.language.toLowerCase().replace(/-/g, '').replace('#', 'sharp')
   skip = options.skip ? 0
   limit = Number(options.limit) ? 0
   if isNaN(skip)
@@ -432,15 +433,23 @@ module.exports = (options, cont) ->
   if isNaN(limit) or limit > 10
     limit = 10
   if location of cities
-    location = cities[location]
+    location = cities[location].toLowerCase()
 
   if ! location?
     cont 'location required'
   else if ! language?
     cont 'language required'
   else
-    location = location[0].toUpperCase() + location[1..-1]
-    languages = {}
-    languages[language] = 1
-    User.find {location, hireable}, null, {skip, limit, sort: {languages}}, obtain(users)
+    location = location[0].toUpperCase() + location[1..-1] + ', China'
+    cond = {location}
+    args = {skip, limit}
+    if language[0] == '*' # hits
+      args.sort = {hits_rank: -1}
+    else
+      args.sort = {}
+      args.sort['languages.' + language] = -1
+      cond['languages.' + language] = $gt: 0
+    console.log cond
+    User.find {location}, null, _.extend(args, {limit}), obtain(users)
+    #User.find cond, null, _.extend(args, {limit}), obtain(users)
     cont null, users

@@ -7,7 +7,12 @@ global-reset()
 @import '_grid'
 
 .container
-  width 980px
+  max-width 980px
+  margin 0 auto
+  padding 0 20px
+
+.wrapper
+  max-width 480px
   margin 0 auto
 
 $form-color = black
@@ -78,11 +83,11 @@ $form-color = black
 
 .masthead
   background #3bc492
-  line-height 120px
+  line-height 100px
   font-size 30px
 
 header
-  padding 50px 0
+  padding 20px 0
   clearfix()
 
   nav
@@ -97,8 +102,51 @@ header
       border-bottom 2px solid #3bc490
 
 button
+  font-size larger
   margin-top 30px
   text-align center
+  background #93b8ca
+  color white
+  text-transform uppercase
+  border 0
+  padding 16px 24px
+  border-radius 4px
+  cursor pointer
+  &:hover
+    background darken(#93b8ca, 20%)
 
 form
   text-align center
+
+.user span
+  margin-right 10px
+
+select
+  background transparent url("http://cdn1.iconfinder.com/data/icons/cc_mono_icon_set/blacks/16x16/br_down.png") no-repeat right center
+  -webkit-apperance none
+  background white
+
+input
+  border 0
+  outline 0
+  font inherit
+
+.user-item
+  background purple
+  border-radius 10px
+  margin-top 20px
+  background #ede5f1
+  &:nth-child(2n)
+    background #e4f5e2
+  padding 14px
+  overflow auto
+  a
+    float left
+    margin-right 32px
+  .user-item-desc
+    margin-left 20px
+  .name
+    color #44c
+    margin-bottom 12px
+  .row
+    color #333

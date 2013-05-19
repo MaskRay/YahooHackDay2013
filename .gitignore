@@ -2,3 +2,5 @@
 /public/js
 node_modules
 *.swp
+*~
+main
