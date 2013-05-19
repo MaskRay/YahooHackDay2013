@@ -462,10 +462,10 @@ block content
               option C
               option C#
               option C++
-              option Common
+              option Common Lisp
               option CSS
               option Diff
-              option Emacs
+              option Emacs Lisp
               option Erlang
               option Haskell
               option HTML
@@ -484,12 +484,13 @@ block content
     .wrapper
       if typeof users != 'undefined'
         for i in users
-          .user-item
-            a(href='#')
-              img(src='https://secure.gravatar.com/avatar/' + i.gravatar_id)
-            .user-item-desc
-              .name
-                = i.login + ' (' + i.name + ')'
-              .row
-                = 'Rank '
-                span.rank= (i.hits_rank * 1e8).toFixed(2)
+          if i.hits_rank > 0
+            .user-item
+              a(href='#')
+                img(src='https://secure.gravatar.com/avatar/' + i.gravatar_id)
+              .user-item-desc
+                .name
+                  = i.login + ' (' + i.name + ')'
+                .row
+                  = 'Rank '
+                  span.rank= (i.hits_rank * 1e8).toFixed(2)
