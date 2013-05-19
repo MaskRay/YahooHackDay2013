@@ -28,6 +28,9 @@ pushToDB = (projname) ->
 	if not proj
 		proj = new Project name: projname
 		proj.save obtain()
+		console.log "new project `#{projname}' pushed to DB"
+	else
+		console.log "project `#{projname}' is already in DB"
 
 projectPushToDBQueue = async.queue pushToDB, PUSH_TO_DB_CONCURRENCY
 
@@ -43,7 +46,13 @@ parseProjects = ($) ->
 crawlProjects = (page, callback) ->
 	path = "/directory/?sort=popular&page=#{page}"
 	console.log "fetching #{host + path} ..."
-	get host + path, obtain body
+	try
+		get host + path, obtain body
+	catch err
+		projectsCrawlQueue.push page
+		console.log "#{host + path} fetch failed, pushed to queue"
+		callback()
+		return
 	console.log "fected #{host + path}"
 	#console.log body
 	$ = cheerio.load body
@@ -54,9 +63,13 @@ crawlProjects = (page, callback) ->
 		if not proj
 			proj = new Project name: projname
 			proj.save obtain()
+			console.log "new project `#{projname}' pushed to DB"
+		else
+			console.log "project `#{projname}' is already in DB"
+
 	callback()
 
 projectsCrawlQueue = async.queue crawlProjects, CRAWL_PROJECTS_CONCURRENCY
 
-for page in [600..N_PAGE_MAX]
+for page in [9190..N_PAGE_MAX]
 	projectsCrawlQueue.push page
